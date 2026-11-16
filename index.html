@@ -63,7 +63,7 @@ nav.tabs button{flex:1 0 auto;border:0;background:none;padding:10px 10px 9px;fon
 nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
 nav.tabs button .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-left:4px;vertical-align:middle}
 
-main{display:grid;gap:14px;padding-top:14px}
+main{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding-top:14px}
 .hero{display:grid;gap:8px}
 .hero .eyebrow{font-size:13px;font-weight:600;color:var(--accent-ink);text-transform:uppercase;letter-spacing:1px}
 .hero h2{font-family:var(--display);font-weight:800;font-size:38px;line-height:1;margin:0;text-transform:uppercase;text-wrap:balance}
@@ -105,8 +105,9 @@ ol.list li .n{font-family:var(--display);font-weight:800;font-size:20px;color:va
 .sets label:has(input:checked) small{color:#fff}
 .sets label:has(input:focus-visible){outline:3px solid var(--accent);outline-offset:2px}
 
-.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.field{display:grid;gap:4px}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.field{display:grid;gap:4px;min-width:0}
+.card>*,.field>*{min-width:0}
 .field label{font-size:13px;font-weight:600;color:var(--muted)}
 .field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:10px 12px;font-size:20px;font-variant-numeric:tabular-nums}
 .field textarea{font-size:16px;min-height:70px;resize:vertical}
@@ -126,6 +127,8 @@ td.num{text-align:right;font-weight:600}
 th.num{text-align:right}
 .scroll{overflow-x:auto}
 .cur td{background:var(--good-bg)}
+/* Progresso: seta contra a semana anterior e melhor marca em destaque */
+.up{color:var(--good)} .dn{color:var(--muted)} td.best{color:var(--accent-ink)}
 
 details{border-top:1px solid var(--line);padding-top:10px}
 summary{font-weight:600;cursor:pointer;color:var(--accent-ink)}
@@ -186,7 +189,7 @@ const WEEKS = [
   {n:4, short:"Leve", txt:"Semana leve: 70% do peso"}
 ];
 const WARM = [
-  {id:"w-bike", t:"3 min de bike leve"},
+  {id:"w-bike", t:"3 min de remo ou air bike leve"},
   {id:"w-r1", t:"Rodada 1 do aquecimento", sub:true},
   {id:"w-r2", t:"Rodada 2 do aquecimento", sub:true},
   {id:"w-light", t:"2 séries leves do exercício principal"}
@@ -194,7 +197,7 @@ const WARM = [
 const WARM_ROUND = [
   {n:"10 agachamentos sem peso", en:"air squat"},
   {n:"10 levantamentos do kettlebell do chão", en:"kettlebell deadlift"},
-  {n:"20 s de ondas leves na corda naval", en:"battle rope waves"},
+  {n:"5 voltas do kettlebell em volta da cabeça, para cada lado", en:"kettlebell halo"},
   {n:"5 caminhadas com as mãos até a posição de flexão", en:"inchworm"}
 ];
 const DAYS = {
@@ -205,15 +208,15 @@ const DAYS = {
       how:"Faça a sequência sem parar e conte quantas voltas completa em 12 min.", goal:"Meta: 5 voltas ou mais",
       items:[{n:"10 balanços com kettlebell", en:"kettlebell swing"},
              {n:"8 agachamentos empurrando a barra pra cima ao subir", en:"thruster"},
-             {n:"30 s de ondas alternadas na corda naval", en:"battle rope waves"}]}},
+             {n:"10 calorias no remo", en:"row", alt:"Ficou difícil? 7 calorias, em ritmo constante."}]}},
   qua:{label:"Qua", dow:3, title:"Costas + cardio",
     strength:{id:"deadlift", name:"Levantamento terra com barra", en:"deadlift", sets:5, reps:3, rest:150, restTxt:"2 a 3 min",
       tip:"Costas retas o tempo todo. Se a postura quebrar, tire peso."},
     circuit:{type:"emom", minutes:16, rounds:4, title:"Circuito por minuto", tag:"16 min",
       how:"Cada minuto um exercício. Terminou antes? O que sobra do minuto é descanso. Repita a sequência 4 vezes.",
-      items:[{n:"Bike: 12 a 15 calorias", en:null},
+      items:[{n:"Air bike: 10 a 12 calorias", en:null, alt:"Ficou difícil? 8 calorias."},
              {n:"12 agachamentos com kettlebell no peito", en:"goblet squat"},
-             {n:"8 puxadas da barra do chão até os ombros, bem leve", en:"power clean", alt:"Ficou difícil? Troque por 12 balanços com kettlebell (kettlebell swing)."},
+             {n:"8 puxadas do kettlebell do chão até o ombro, de cada braço", en:"kettlebell clean", alt:"Ficou difícil? Troque por 12 balanços com kettlebell (kettlebell swing)."},
              {n:"10 deita-e-levanta", en:"burpee"}]}},
   sex:{label:"Sex", dow:5, title:"Ombros + resistência",
     strength:{id:"pushpress", name:"Barra nos ombros, dobra levemente os joelhos e empurra pra cima da cabeça", en:"push press", sets:5, reps:5, rest:120, restTxt:"2 min",
@@ -223,8 +226,8 @@ const DAYS = {
       items:[{n:"Corre 400 m na esteira", en:null},
              {n:"15 balanços com kettlebell", en:"kettlebell swing"},
              {n:"12 agachamentos com a barra apoiada na frente, nos ombros", en:"front squat"},
-             {n:"40 s de ondas alternadas na corda naval", en:"battle rope waves"},
-             {n:"15 flexões de braço", en:null}]}}
+             {n:"1 min na escada em ritmo forte", en:null, alt:"Ficou difícil? 40 s, ou um ritmo mais lento."},
+             {n:"15 flexões de braço", en:null, alt:"Ficou difícil? Joelhos no chão."}]}}
 };
 const DAY_KEYS = ["seg","qua","sex"];
 
@@ -277,6 +280,29 @@ function suggestion(day){
   return p ? `Semana passada: ${br(p)} kg → hoje <strong>${br(p+2.5)} a ${br(p+5)} kg</strong>.` : "Anote o peso. Semana que vem a meta é +2,5 a 5 kg.";
 }
 
+/* ---------- Recordes ---------- */
+// Nota comparável de um registro (maior = melhor). null quando não há valor válido.
+function score(day, w, f){
+  const l = peekL(day, w); if(!l) return null;
+  if(f === "kg"){ const v = kg(l.kg); return v > 0 ? v : null; }
+  if(f === "rounds"){ const r = parseInt(l.rounds, 10); return r >= 0 ? r*1000 + (parseInt(l.reps, 10) || 0) : null; }
+  if(f === "time"){ const m = /^(\d{1,2}):([0-5]\d)$/.exec(l.time || ""); return m ? -(m[1]*60 + +m[2]) : null; }
+  return null;
+}
+function isRecord(day, f){
+  const cur = score(day, S.week, f); if(cur == null) return false;
+  const prev = WEEKS.filter(w => w.n < S.week).map(w => score(day, w.n, f)).filter(v => v != null);
+  return prev.length > 0 && cur > Math.max(...prev);
+}
+function arrow(day, w, f){
+  const cur = score(day, w, f), p = w > 1 ? score(day, w-1, f) : null;
+  return cur == null || p == null || cur === p ? "" : cur > p ? ' <span class="up">▲</span>' : ' <span class="dn">▼</span>';
+}
+function bestCls(day, w, f){
+  const all = WEEKS.map(x => score(day, x.n, f)).filter(v => v != null), cur = score(day, w, f);
+  return all.length > 1 && cur != null && cur === Math.max(...all) ? " best" : "";
+}
+
 /* ---------- Render ---------- */
 let tab = (function(){
   const h = (location.hash || "").replace("#","");
@@ -313,7 +339,7 @@ function renderDay(day){
 
   <section class="card" data-block="warm">
     <div class="cardhead"><h3><span class="step">1</span>Aquecimento</h3><span class="tag">~8 min</span></div>
-    ${chk(day,"w-bike","3 min de bike leve")}
+    ${chk(day,"w-bike","3 min de remo ou air bike leve")}
     <ol class="list">${WARM_ROUND.map((e,i)=>`<li><span class="n">${i+1}</span><span class="ex"><b>${esc(e.n)}</b>${enLink(e.en)}</span></li>`).join("")}</ol>
     <div class="fields">${chk(day,"w-r1","Rodada 1")}${chk(day,"w-r2","Rodada 2")}</div>
     ${chk(day,"w-light","2 séries leves de "+esc(st.en), "Com a barra vazia ou bem leve")}
@@ -341,13 +367,13 @@ function renderDay(day){
     ${circuitLog(day)}
     <div class="fields">
       <div class="field"><label for="kb-${day}">Kettlebell (kg)</label><input id="kb-${day}" data-field="kb" inputmode="decimal" placeholder="ex: 12" value="${esc(l.kb??"")}"></div>
-      <div class="field"><label for="bar-${day}">Barra no circuito (kg)</label><input id="bar-${day}" data-field="bar" inputmode="decimal" placeholder="${day==="qua"?"power clean":"ex: 20"}" value="${esc(l.bar??"")}"></div>
+      ${day==="qua" ? "" : `<div class="field"><label for="bar-${day}">Barra no circuito (kg)</label><input id="bar-${day}" data-field="bar" inputmode="decimal" placeholder="ex: 20" value="${esc(l.bar??"")}"></div>`}
     </div>
   </section>
 
   <section class="card">
     <div class="cardhead"><h3><span class="step">4</span>Final</h3><span class="tag">5 min</span></div>
-    ${chk(day,"final","2 min de bike bem leve + alongar","Pernas, costas e ombros")}
+    ${chk(day,"final","2 min de air bike bem leve ou caminhada na esteira + alongar","Pernas, costas e ombros")}
     <div class="field"><label for="notes-${day}">Anotações do dia</label><textarea id="notes-${day}" data-field="notes" placeholder="Como foi? Algo doeu? Ajustou algum exercício?">${esc(l.notes??"")}</textarea></div>
   </section>`;
   return html;
@@ -361,21 +387,22 @@ function circuitLog(day){
     </div>
     ${chk(day,"amrap","Circuito concluído")}`;
   if(c.type === "emom") return `<div class="fields">${Array.from({length:c.rounds},(_,i)=>chk(day,"emom"+(i+1),"Sequência "+(i+1),"Min "+(i*4+1)+" a "+(i*4+4))).join("")}</div>
-    <div class="field"><label for="cal-${day}">Calorias na bike (média por minuto)</label><input id="cal-${day}" data-field="cal" inputmode="numeric" placeholder="ex: 13" value="${esc(l.cal??"")}"></div>`;
-  return `<div class="fields" style="grid-template-columns:repeat(3,1fr)">${Array.from({length:c.rounds},(_,i)=>chk(day,"ft"+(i+1),"Volta "+(i+1))).join("")}</div>
-    <div class="field"><label for="time-${day}">Tempo final (min:seg)</label><input id="time-${day}" data-field="time" inputmode="numeric" placeholder="ex: 17:42" value="${esc(l.time??"")}"></div>`;
+    <div class="field"><label for="cal-${day}">Calorias na air bike (média por minuto)</label><input id="cal-${day}" data-field="cal" inputmode="numeric" placeholder="ex: 11" value="${esc(l.cal??"")}"></div>`;
+  return `<div class="fields" style="grid-template-columns:repeat(3,minmax(0,1fr))">${Array.from({length:c.rounds},(_,i)=>chk(day,"ft"+(i+1),"Volta "+(i+1))).join("")}</div>
+    <div class="field"><label for="time-${day}">Tempo final (min:seg)</label><input id="time-${day}" data-field="time" inputmode="numeric" placeholder="ex: 17:42" value="${esc(l.time??"")}"></div>
+    ${l.laps && l.laps.length ? `<p class="hint">Tempo de cada volta: ${l.laps.map(esc).join(" · ")}</p>` : ""}`;
 }
 function renderProgress(){
   const lifts = DAY_KEYS.map(k => ({k, en:DAYS[k].strength.en}));
   const rows = WEEKS.map(w => {
-    const cells = lifts.map(x => { const v = kg((peekL(x.k,w.n)||{}).kg); return `<td class="num">${v?br(v):"–"}</td>`; }).join("");
+    const cells = lifts.map(x => { const v = kg((peekL(x.k,w.n)||{}).kg); return `<td class="num${bestCls(x.k,w.n,"kg")}">${v?br(v)+arrow(x.k,w.n,"kg"):"–"}</td>`; }).join("");
     return `<tr class="${w.n===S.week?"cur":""}"><td>Sem ${w.n}</td>${cells}</tr>`;
   }).join("");
   const crow = WEEKS.map(w => {
     const a = peekL("seg",w.n)||{}, b = peekL("qua",w.n)||{}, f = peekL("sex",w.n)||{};
     const am = a.rounds ? `${a.rounds}${a.reps?" + "+a.reps:""}` : "–";
     const em = b.c ? [1,2,3,4].filter(i=>b.c["emom"+i]).length + "/4" : "–";
-    return `<tr class="${w.n===S.week?"cur":""}"><td>Sem ${w.n}</td><td class="num">${esc(am)}</td><td class="num">${em}</td><td class="num">${esc(f.time||"–")}</td></tr>`;
+    return `<tr class="${w.n===S.week?"cur":""}"><td>Sem ${w.n}</td><td class="num${bestCls("seg",w.n,"rounds")}">${esc(am)}${a.rounds?arrow("seg",w.n,"rounds"):""}</td><td class="num">${em}</td><td class="num${bestCls("sex",w.n,"time")}">${esc(f.time||"–")}${f.time?arrow("sex",w.n,"time"):""}</td></tr>`;
   }).join("");
   const done = WEEKS.map(w => `<tr class="${w.n===S.week?"cur":""}"><td>Sem ${w.n}</td>${DAY_KEYS.map(k=>{const p=progress(k,w.n);return `<td class="num">${p.pct===100?"✓":p.done?p.pct+"%":"–"}</td>`;}).join("")}</tr>`).join("");
   return `
@@ -386,7 +413,7 @@ function renderProgress(){
     <div class="scroll"><table><thead><tr><th></th>${lifts.map(x=>`<th class="num">${esc(x.en)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div></section>
   <section class="card"><div class="cardhead"><h3>Circuitos</h3></div>
     <div class="scroll"><table><thead><tr><th></th><th class="num">Seg voltas</th><th class="num">Qua seq.</th><th class="num">Sex tempo</th></tr></thead><tbody>${crow}</tbody></table></div>
-    <p class="hint">Meta de segunda: 5 voltas ou mais. Na sexta, menos tempo é melhor (máx. 20 min).</p></section>
+    <p class="hint">Meta de segunda: 5 voltas ou mais. Na sexta, menos tempo é melhor (máx. 20 min). ▲ melhorou contra a semana anterior; em destaque, a melhor marca.</p></section>
   <section class="card"><div class="cardhead"><h3>Backup</h3></div>
     <p class="hint">Copie seus registros para guardar em outro lugar, ou cole um backup para restaurar.</p>
     <div class="row"><button type="button" class="btn ghost sm" id="copyBk">Copiar backup</button><button type="button" class="btn ghost sm" id="showImp">Restaurar</button></div>
@@ -394,8 +421,8 @@ function renderProgress(){
   </section>`;
 }
 function renderGuide(){
-  const prio = ["deadlift","kettlebell swing","power clean"];
-  const rest = ["air squat","kettlebell deadlift","inchworm","battle rope waves","back squat","thruster","goblet squat","burpee","push press","front squat"];
+  const prio = ["deadlift","kettlebell swing","kettlebell clean","rowing machine technique"];
+  const rest = ["air squat","kettlebell deadlift","kettlebell halo","inchworm","back squat","thruster","goblet squat","burpee","push press","front squat"];
   const link = q => `<a class="btn ghost sm" href="${YT(q)}" target="_blank" rel="noopener">${esc(q)}</a>`;
   return `
   <section class="hero"><div class="eyebrow">Consulta rápida</div><h2>Guia</h2><p>Evolução, ajustes e vídeos de técnica.</p></section>
@@ -403,10 +430,12 @@ function renderGuide(){
     <div class="scroll"><table><tbody>${WEEKS.map(w=>`<tr class="${w.n===S.week?"cur":""}"><td><strong>Sem ${w.n}</strong></td><td>${esc(w.txt)}</td></tr>`).join("")}</tbody></table></div></section>
   <section class="card"><div class="cardhead"><h3>Se ficar difícil</h3></div>
     <ul class="list">
-      <li><b>Corda naval:</b> 20 s, ou ondas menores e mais lentas</li>
+      <li><b>Remo:</b> 7 calorias, em ritmo constante</li>
+      <li><b>Escada:</b> 40 s, ou um ritmo mais lento</li>
+      <li><b>Air bike:</b> 8 calorias</li>
       <li><b>Burpee:</b> sem o pulinho no final</li>
       <li><b>Flexão:</b> joelhos no chão</li>
-      <li><b>Power clean:</b> troque por 12 balanços com kettlebell</li>
+      <li><b>Kettlebell clean:</b> troque por 12 balanços com kettlebell</li>
       <li><b>Muito cansado:</b> 1 volta a menos no circuito</li>
       <li><b>Postura ruim:</b> diminua o peso. Técnica antes de carga.</li>
     </ul></section>
@@ -449,11 +478,13 @@ document.addEventListener("click", e => {
   }
   if(e.target.id === "showImp"){ $("#impBox").hidden = false; $("#impTxt").focus(); return; }
   if(e.target.id === "doImp"){
-    try{ const d = JSON.parse($("#impTxt").value); if(!d || typeof d.log !== "object") throw 0; S = {week:d.week||1, log:d.log, updatedAt:0}; save(); renderAll(); toast("Backup restaurado"); }
+    try{ const d = JSON.parse($("#impTxt").value); if(!d || typeof d.log !== "object") throw 0; S = Object.assign({}, d, {week:d.week||1, updatedAt:0}); save(); renderAll(); toast("Backup restaurado"); }
     catch(_){ toast("Esse texto não é um backup válido"); }
   }
 });
 document.addEventListener("change", e => {
+  const rf = e.target.closest("[data-field]");
+  if(rf && DAYS[tab]){ const f = {kg:"kg", rounds:"rounds", reps:"rounds", time:"time"}[rf.dataset.field]; if(f && isRecord(tab, f)) toast("Recorde! Melhor marca até agora"); }
   const c = e.target.closest("[data-check]");
   if(c && DAYS[tab]){
     L(tab).c[c.dataset.check] = c.checked; save(); refreshProgress();
@@ -492,6 +523,7 @@ function stopTimer(){ clearInterval(tick); tick = null; T = null; $("#timer").cl
 function ctrl(btns){ $("#tCtrl").innerHTML = btns.map(b=>`<button type="button" class="${b.main?"main":""}" data-t="${b.a}">${b.t}</button>`).join(""); }
 $("#tCtrl").addEventListener("click", e => {
   const a = e.target.closest("[data-t]"); if(!a || !T) return;
+  unlockAudio();
   const act = a.dataset.t;
   if(act === "stop") return stopTimer();
   if(act === "next" && T.kind === "emom"){ // pula o resto do minuto atual
@@ -507,13 +539,22 @@ $("#tCtrl").addEventListener("click", e => {
   if(act === "round"){ // AMRAP: +1 volta
     const l = L(T.day); l.rounds = String((+l.rounds||0) + 1); save();
     const inp = document.getElementById("rounds-"+T.day); if(inp) inp.value = l.rounds;
-    beep(660,.08); return draw();
+    beep(990,.2); flip(); return draw();
   }
-  if(act === "finish"){ // For time: salvar tempo
-    const el = (Date.now() - T.start) / 1000, l = L(T.day); l.time = fmt(el);
-    const ids = checkIds(T.day).filter(i=>i.startsWith("ft")); ids.forEach(i=>l.c[i]=true);
-    save(); const day = T.day; stopTimer(); if(tab===day) renderMain(); refreshProgress(); toast("Tempo salvo: " + l.time);
+  if(act === "lap"){ // For time: fecha uma volta; a última salva o tempo final
+    const now = T.paused || Date.now();
+    if(now - T.lapAt < 1500) return; // toque duplo sem querer
+    T.lapAt = now;
+    const el = (now - T.start) / 1000, prev = T.laps.reduce((a,b)=>a+b, 0), l = L(T.day);
+    T.laps.push(el - prev); l.laps = T.laps.map(fmt);
+    const n = T.laps.length, total = DAYS[T.day].circuit.rounds;
+    l.c["ft"+n] = true; const cb = document.getElementById(`c-${T.day}-ft${n}`); if(cb) cb.checked = true;
+    if(n < total){ save(); refreshProgress(); beep(990,.25); flip(); return draw(); }
+    l.time = fmt(el); save(); beep(990,.35,3);
+    const day = T.day; stopTimer(); if(tab===day) renderMain(); refreshProgress();
+    toast(isRecord(day, "time") ? "Recorde! Tempo: " + l.time : "Tempo salvo: " + l.time);
   }
+
 });
 function startRest(sec){
   T = {kind:"rest", start:Date.now(), end:Date.now()+sec*1000, last:-1};
@@ -532,9 +573,9 @@ function startCircuit(day){
     $("#tLbl").textContent = "Por minuto · 16 min";
     ctrl([{a:"next",t:"Próximo",main:true},{a:"pause",t:"Pausar"},{a:"stop",t:"Parar"}]);
   } else {
-    T = {kind:"fortime", day, start:now, end:now+c.cap*60000, last:-1};
+    T = {kind:"fortime", day, start:now, end:now+c.cap*60000, last:-1, laps:[], lapAt:0};
     $("#tLbl").textContent = "Contra o relógio · máx. 20 min";
-    ctrl([{a:"finish",t:"Terminei",main:true},{a:"pause",t:"Pausar"},{a:"stop",t:"Parar"}]);
+    ctrl([{a:"lap",t:"Volta 1/"+c.rounds,main:true},{a:"pause",t:"Pausar"},{a:"stop",t:"Parar"}]);
   }
   beep(990,.25); showTimer(); run();
 }
@@ -548,12 +589,14 @@ function draw(){
   const secLeft = Math.ceil(left);
   if(T.kind === "fortime"){
     $("#tClock").textContent = fmt(el);
-    $("#tNow").textContent = "3 voltas · toque em Terminei ao acabar";
+    const n = T.laps.length, total = DAYS[T.day].circuit.rounds;
+    $("#tNow").textContent = n ? `Volta ${n+1} de ${total} · última ${fmt(T.laps[n-1])}` : `Volta 1 de ${total} · toque ao fechar cada volta`;
+    const lb = document.querySelector('[data-t="lap"]'); if(lb) lb.textContent = `Volta ${n+1}/${total}`;
   } else {
     $("#tClock").textContent = fmt(left);
   }
   if(T.kind === "rest") $("#tNow").textContent = left > 0 ? "Respira. Próxima série em breve." : "Bora! Próxima série.";
-  if(T.kind === "amrap"){ const l = L(T.day); $("#tNow").textContent = `Voltas: ${l.rounds||0}`; }
+  if(T.kind === "amrap"){ const l = L(T.day), p = S.week > 1 && peekL(T.day, S.week-1); $("#tNow").textContent = `Voltas: ${l.rounds||0}` + (p && p.rounds ? ` · semana passada: ${p.rounds}` : ""); }
   if(T.kind === "emom"){
     const min = Math.min(15, Math.floor(el/60)), items = DAYS.qua.circuit.items;
     const it = items[min % 4];
@@ -574,7 +617,7 @@ function draw(){
   $("#timer").classList.toggle("alarm", T.kind === "emom" ? 60 - el % 60 <= 3 : T.kind !== "fortime" && left <= 3);
   if(left <= 0 && !T.paused){
     if(T.kind === "emom"){ L(T.day).c.emom4 = true; save(); if(tab===T.day) renderMain(); refreshProgress(); }
-    if(T.kind === "amrap"){ L(T.day).c.amrap = true; save(); if(tab===T.day) renderMain(); refreshProgress(); toast("Tempo! Anote as reps extras."); }
+    if(T.kind === "amrap"){ L(T.day).c.amrap = true; save(); if(tab===T.day) renderMain(); refreshProgress(); toast(isRecord(T.day, "rounds") ? "Tempo! Recorde de voltas. Anote as reps extras." : "Tempo! Anote as reps extras."); }
     if(T.kind === "fortime"){ L(T.day).time = "20:00 (limite)"; save(); if(tab===T.day) renderMain(); toast("Limite de 20 min. Tempo salvo."); }
     beep(990,.35,3); clearInterval(tick); tick = null;
     const done = T; setTimeout(() => { if(T === done) stopTimer(); }, T.kind === "rest" ? 1500 : 3000);
