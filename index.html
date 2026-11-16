@@ -141,9 +141,14 @@ summary{font-weight:600;cursor:pointer;color:var(--accent-ink)}
 .timer .ctrl button{flex:1;border:0;border-radius:10px;padding:11px 8px;font-family:var(--display);font-weight:700;font-size:18px;text-transform:uppercase;background:rgba(127,127,127,.25);color:inherit}
 .timer .ctrl button.main{background:var(--accent);color:var(--on-accent)}
 .timer.alarm .clock{color:var(--accent)}
+/* Troca de exercício no circuito por minuto: painel pisca na cor de destaque e o nome do exercício entra em destaque */
+.timer.flip{animation:flipBg 1.2s ease-out}
+.timer.flip .now{animation:flipTxt 1.2s ease-out}
+@keyframes flipBg{0%,35%{background:var(--accent);color:var(--on-accent)}100%{background:var(--ink);color:var(--bg)}}
+@keyframes flipTxt{0%{transform:translateY(12px) scale(1.25);opacity:0}30%{transform:none;opacity:1}}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 12px);transform:translate(-50%,-150%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;z-index:20;transition:transform .2s;max-width:90vw}
 .toast.on{transform:translate(-50%,0)}
-@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}.timer.flip .now{animation:none}}
 @media (max-width:360px){.hero h2{font-size:32px}.timer .clock{font-size:46px}}
 </style>
 </head>
@@ -470,7 +475,7 @@ document.addEventListener("input", e => {
 
 /* ---------- Timer ---------- */
 let T = null, tick = null, actx = null;
-function unlockAudio(){ try{ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); if(actx.state === "suspended") actx.resume(); }catch(_){ actx = null; } }
+function unlockAudio(){ try{ if(navigator.audioSession) navigator.audioSession.type = "playback"; if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); if(actx.state === "suspended") actx.resume(); }catch(_){ actx = null; } }
 function beep(freq=880, dur=.15, n=1){
   if(!actx) return;
   try{ for(let i=0;i<n;i++){ const o = actx.createOscillator(), g = actx.createGain(), t0 = actx.currentTime + i*(dur+.08);
@@ -489,6 +494,10 @@ $("#tCtrl").addEventListener("click", e => {
   const a = e.target.closest("[data-t]"); if(!a || !T) return;
   const act = a.dataset.t;
   if(act === "stop") return stopTimer();
+  if(act === "next" && T.kind === "emom"){ // pula o resto do minuto atual
+    const r = 60000 - ((T.paused || Date.now()) - T.start) % 60000;
+    T.start -= r; T.end -= r; return draw();
+  }
   if(act === "plus30"){ T.end += 30000; return draw(); }
   if(act === "pause"){
     if(T.paused){ const d = Date.now() - T.paused; T.start += d; if(T.end) T.end += d; T.paused = 0; }
@@ -521,7 +530,7 @@ function startCircuit(day){
   } else if(c.type === "emom"){
     T = {kind:"emom", day, start:now, end:now+c.minutes*60000, last:-1, lastMin:-1};
     $("#tLbl").textContent = "Por minuto · 16 min";
-    ctrl([{a:"pause",t:"Pausar"},{a:"stop",t:"Parar"}]);
+    ctrl([{a:"next",t:"Próximo",main:true},{a:"pause",t:"Pausar"},{a:"stop",t:"Parar"}]);
   } else {
     T = {kind:"fortime", day, start:now, end:now+c.cap*60000, last:-1};
     $("#tLbl").textContent = "Contra o relógio · máx. 20 min";
@@ -529,6 +538,7 @@ function startCircuit(day){
   }
   beep(990,.25); showTimer(); run();
 }
+function flip(){ const t = $("#timer"); t.classList.remove("flip"); void t.offsetWidth; t.classList.add("flip"); }
 function run(){ clearInterval(tick); draw(); tick = setInterval(draw, 250); }
 function draw(){
   if(!T) return;
@@ -550,17 +560,18 @@ function draw(){
     $("#tNow").textContent = `Min ${min+1}/16 · ${it.en || it.n}`;
     $("#tClock").textContent = fmt(60 - (el % 60));
     if(min !== T.lastMin && !T.paused){
-      if(T.lastMin >= 0){ beep(990,.25);
+      if(T.lastMin >= 0){ beep(990,.4); flip();
         if(min % 4 === 0){ const k = "emom" + (min/4); L(T.day).c[k] = true; save(); const cb = document.getElementById(`c-${T.day}-${k}`); if(cb) cb.checked = true; refreshProgress(); }
       }
       T.lastMin = min;
     }
   }
   if(!T.paused && secLeft !== T.last){
-    if(secLeft <= 3 && secLeft > 0 && T.kind !== "fortime" && T.kind !== "emom") beep(660,.1);
+    const cd = T.kind === "emom" ? Math.ceil(60 - el % 60) : secLeft; // emom: contagem 3-2-1 de cada minuto
+    if(cd <= 3 && cd > 0 && secLeft > 0 && T.kind !== "fortime") beep(660,.1);
     T.last = secLeft;
   }
-  $("#timer").classList.toggle("alarm", T.kind!=="fortime" && left <= 3);
+  $("#timer").classList.toggle("alarm", T.kind === "emom" ? 60 - el % 60 <= 3 : T.kind !== "fortime" && left <= 3);
   if(left <= 0 && !T.paused){
     if(T.kind === "emom"){ L(T.day).c.emom4 = true; save(); if(tab===T.day) renderMain(); refreshProgress(); }
     if(T.kind === "amrap"){ L(T.day).c.amrap = true; save(); if(tab===T.day) renderMain(); refreshProgress(); toast("Tempo! Anote as reps extras."); }
